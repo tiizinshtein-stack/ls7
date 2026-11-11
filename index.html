@@ -2,9 +2,87 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Version from miri_works</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Version from main</title>
+<style>
+  :root{
+    --bg1:#050b24; --bg2:#0d1b4c; --gold:#ffd54a; --gold2:#ff9f1c; --ink:#eaf0ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; color:var(--ink); direction:rtl; background-color:var(--bg1);
+    font-family:"Segoe UI",Arial,sans-serif;
+    background:radial-gradient(circle at 50% 0%,var(--bg2),var(--bg1) 70%) var(--bg1);
+    overflow-x:hidden;
+  }
+  canvas#sparks{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:0}
+  main{position:relative; z-index:1; max-width:860px; margin:0 auto; padding-block:24px 60px;
+    padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); text-align:center}
+  h1{
+    font-size:clamp(2rem,6vw,3.4rem); margin:.2em 0;
+    background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold));
+    background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 4s linear infinite;
+  }
+  @keyframes shine{to{background-position:200% center}}
+  .sub{opacity:.8; margin-bottom:28px}
+
+  .card{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,213,74,.35);
+    border-radius:20px; padding:20px; margin:18px 0;
+    backdrop-filter:blur(6px); box-shadow:0 0 30px rgba(255,159,28,.12);
+  }
+  .card h2{margin:0 0 14px; color:var(--gold)}
+
+  /* countdown */
+  .count{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+  .box{min-width:78px; padding:12px 8px; border-radius:14px; background:rgba(0,0,0,.35)}
+  .box b{display:block; font-size:2.2rem; color:var(--gold); font-variant-numeric:tabular-nums}
+  .box span{font-size:.85rem; opacity:.8}
+
+  /* dreidel */
+  .stage{perspective:700px; height:190px; display:flex; align-items:center; justify-content:center}
+  #dreidel{
+    width:120px; height:160px; position:relative; transform-style:preserve-3d;
+    transition:transform 2.6s cubic-bezier(.12,.7,.2,1);
+  }
+  .face{
+    position:absolute; width:90px; height:90px; left:15px; top:30px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:3rem; font-weight:bold; color:#3a2300;
+    background:linear-gradient(135deg,#fff1a8,var(--gold2));
+    border:2px solid #fff3c4; border-radius:10px;
+    backface-visibility:hidden;
+  }
+  .f0{transform:rotateY(0deg) translateZ(45px)}
+  .f1{transform:rotateY(90deg) translateZ(45px)}
+  .f2{transform:rotateY(180deg) translateZ(45px)}
+  .f3{transform:rotateY(270deg) translateZ(45px)}
+  .top{position:absolute; left:55px; top:0; width:10px; height:34px; background:var(--gold); border-radius:4px; transform:translateZ(0)}
+  .tip{position:absolute; left:50px; top:122px; width:0; height:0;
+    border-left:10px solid transparent; border-right:10px solid transparent; border-top:30px solid var(--gold2)}
+  button{
+    font:inherit; font-weight:bold; cursor:pointer; padding:12px 28px; border:0; border-radius:999px;
+    color:#3a2300; background:linear-gradient(135deg,#fff1a8,var(--gold2));
+    box-shadow:0 6px 20px rgba(255,159,28,.35); transition:transform .15s;
+  }
+  button:hover{transform:scale(1.05)} button:disabled{opacity:.6; cursor:wait}
+  #result{margin-top:12px; min-height:1.6em; font-size:1.2rem}
+  #score{color:var(--gold); font-weight:bold}
+
+  /* tasks */
+  ul{list-style:none; padding:0; margin:0; text-align:right}
+  li{padding:10px 12px; margin:6px 0; border-radius:12px; background:rgba(0,0,0,.28); display:flex; gap:10px; align-items:center}
+  li input{width:20px; height:20px; accent-color:var(--gold2)}
+  li.done label{text-decoration:line-through; opacity:.5}
+  progress{width:100%; height:14px; margin-top:12px; accent-color:var(--gold2)}
+  .opts{display:grid; gap:8px; margin:10px 0}
+  .opts button{background:rgba(0,0,0,.35); color:var(--ink); box-shadow:none; border:1px solid rgba(255,213,74,.4); text-align:right; border-radius:12px}
+  .opts button.ok{background:#1f7a3a; border-color:#6be38f}
+  .opts button.bad{background:#8a2230; border-color:#ff8a98}
+  pre{direction:ltr; text-align:left; background:#000a; padding:12px; border-radius:12px; overflow:auto; color:#9fe6a0}
+</style>
 </head>
 
 <body>
