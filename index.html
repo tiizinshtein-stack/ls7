@@ -1,12 +1,282 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>שיעורי בית – ספירה לחנוכה</title>
+<style>
+  :root{
+    --bg1:#050b24; --bg2:#0d1b4c; --gold:#ffd54a; --gold2:#ff9f1c; --ink:#eaf0ff;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; color:var(--ink); direction:rtl; background-color:var(--bg1);
+    font-family:"Segoe UI",Arial,sans-serif;
+    background:radial-gradient(circle at 50% 0%,var(--bg2),var(--bg1) 70%) var(--bg1);
+    overflow-x:hidden;
+  }
+  canvas#sparks{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:0}
+  main{position:relative; z-index:1; max-width:860px; margin:0 auto; padding-block:24px 60px;
+    padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); text-align:center}
+  h1{
+    font-size:clamp(2rem,6vw,3.4rem); margin:.2em 0;
+    background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold));
+    background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 4s linear infinite;
+  }
+  @keyframes shine{to{background-position:200% center}}
+  .sub{opacity:.8; margin-bottom:28px}
+
+  .card{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,213,74,.35);
+    border-radius:20px; padding:20px; margin:18px 0;
+    backdrop-filter:blur(6px); box-shadow:0 0 30px rgba(255,159,28,.12);
+  }
+  .card h2{margin:0 0 14px; color:var(--gold)}
+
+  /* countdown */
+  .count{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+  .box{min-width:78px; padding:12px 8px; border-radius:14px; background:rgba(0,0,0,.35)}
+  .box b{display:block; font-size:2.2rem; color:var(--gold); font-variant-numeric:tabular-nums}
+  .box span{font-size:.85rem; opacity:.8}
+
+  /* dreidel */
+  .stage{perspective:700px; height:190px; display:flex; align-items:center; justify-content:center}
+  #dreidel{
+    width:120px; height:160px; position:relative; transform-style:preserve-3d;
+    transition:transform 2.6s cubic-bezier(.12,.7,.2,1);
+  }
+  .face{
+    position:absolute; width:90px; height:90px; left:15px; top:30px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:3rem; font-weight:bold; color:#3a2300;
+    background:linear-gradient(135deg,#fff1a8,var(--gold2));
+    border:2px solid #fff3c4; border-radius:10px;
+    backface-visibility:hidden;
+  }
+  .f0{transform:rotateY(0deg) translateZ(45px)}
+  .f1{transform:rotateY(90deg) translateZ(45px)}
+  .f2{transform:rotateY(180deg) translateZ(45px)}
+  .f3{transform:rotateY(270deg) translateZ(45px)}
+  .top{position:absolute; left:55px; top:0; width:10px; height:34px; background:var(--gold); border-radius:4px; transform:translateZ(0)}
+  .tip{position:absolute; left:50px; top:122px; width:0; height:0;
+    border-left:10px solid transparent; border-right:10px solid transparent; border-top:30px solid var(--gold2)}
+  button{
+    font:inherit; font-weight:bold; cursor:pointer; padding:12px 28px; border:0; border-radius:999px;
+    color:#3a2300; background:linear-gradient(135deg,#fff1a8,var(--gold2));
+    box-shadow:0 6px 20px rgba(255,159,28,.35); transition:transform .15s;
+  }
+  button:hover{transform:scale(1.05)} button:disabled{opacity:.6; cursor:wait}
+  #result{margin-top:12px; min-height:1.6em; font-size:1.2rem}
+  #score{color:var(--gold); font-weight:bold}
+
+  /* tasks */
+  ul{list-style:none; padding:0; margin:0; text-align:right}
+  li{padding:10px 12px; margin:6px 0; border-radius:12px; background:rgba(0,0,0,.28); display:flex; gap:10px; align-items:center}
+  li input{width:20px; height:20px; accent-color:var(--gold2)}
+  li.done label{text-decoration:line-through; opacity:.5}
+  progress{width:100%; height:14px; margin-top:12px; accent-color:var(--gold2)}
+  .opts{display:grid; gap:8px; margin:10px 0}
+  .opts button{background:rgba(0,0,0,.35); color:var(--ink); box-shadow:none; border:1px solid rgba(255,213,74,.4); text-align:right; border-radius:12px}
+  .opts button.ok{background:#1f7a3a; border-color:#6be38f}
+  .opts button.bad{background:#8a2230; border-color:#ff8a98}
+  pre{direction:ltr; text-align:left; background:#000a; padding:12px; border-radius:12px; overflow:auto; color:#9fe6a0}
+</style>
 </head>
 <body>
-    <a href="index.html">Home</a>
-    <a href="./miri.html">My Page</a>
+<canvas id="sparks"></canvas>
+<main>
+  <h1>🕎 שיעורי בית – בדרך לחנוכה</h1>
+  <p class="sub">דף קטן, מגניב ואינטראקטיבי – ספירה לאחור, סביבון, ורשימת משימות.</p>
+
+  <section class="card">
+    <h2>ספירה לאחור לנר ראשון</h2>
+    <div class="count">
+      <div class="box"><b id="d">0</b><span>ימים</span></div>
+      <div class="box"><b id="h">0</b><span>שעות</span></div>
+      <div class="box"><b id="m">0</b><span>דקות</span></div>
+      <div class="box"><b id="s">0</b><span>שניות</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>סביבון – סובבו וצברו נקודות</h2>
+    <div class="stage">
+      <div id="dreidel">
+        <div class="top"></div>
+        <div class="face f0">נ</div><div class="face f1">ג</div>
+        <div class="face f2">ה</div><div class="face f3">פ</div>
+        <div class="tip"></div>
+      </div>
+    </div>
+    <button id="spin">סובב!</button>
+    <div id="result">&nbsp;</div>
+    <div>נקודות: <span id="score">0</span></div>
+  </section>
+
+  <section class="card">
+    <h2>חידון קוד</h2>
+    <div id="quiz">
+      <p id="qNum" style="opacity:.7;margin:0"></p>
+      <pre id="qCode"></pre>
+      <p id="qText" style="font-size:1.2rem"></p>
+      <div id="qOpts" class="opts"></div>
+      <p id="qFeed" style="min-height:1.6em"></p>
+      <button id="qNext" style="display:none">הבא</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>משימות קוד לשיעורי בית</h2>
+    <ul id="tasks"></ul>
+    <progress id="prog" value="0" max="4"></progress>
+    <p id="progText"></p>
+    <pre>// foo bar baz – Lorem ipsum dolor sit amet
+function foo(bar) {
+  return bar.map(baz =&gt; baz * 2);
+}</pre>
+  </section>
+</main>
+
+<script>
+/* ===== הגדרות – אפשר לשנות ===== */
+// תאריך היעד לספירה (שנו לפי הצורך)
+const TARGET = new Date("2026-12-04T17:00:00");
+
+/* ===== ספירה לאחור ===== */
+const $ = id => document.getElementById(id);
+function tick(){
+  let diff = Math.max(0, TARGET - new Date());
+  const s = Math.floor(diff/1000);
+  $("d").textContent = Math.floor(s/86400);
+  $("h").textContent = Math.floor(s%86400/3600);
+  $("m").textContent = Math.floor(s%3600/60);
+  $("s").textContent = s%60;
+}
+tick(); setInterval(tick,1000);
+
+/* ===== סביבון ===== */
+const letters = ["נ","ג","ה","פ"];
+const rules = {
+  "נ":["נס – אין שינוי",0], "ג":["גדול! +5 נקודות",5],
+  "ה":["הצלחה! +2 נקודות",2], "פ":["פעם הבאה… -1 נקודה",-1]
+};
+let rot = 0, score = 0;
+$("spin").onclick = () => {
+  const btn = $("spin"); btn.disabled = true;
+  const pick = Math.floor(Math.random()*4);
+  // סיבובים מלאים + זווית שמציגה את האות שנבחרה
+  rot += 360*5 + ((360 - (rot % 360)) % 360) + (360 - pick*90) % 360;
+  $("dreidel").style.transform = `rotateY(${rot}deg)`;
+  $("result").textContent = "מסתובב…";
+  setTimeout(()=>{
+    const [txt,pts] = rules[letters[pick]];
+    score += pts; $("score").textContent = score;
+    $("result").textContent = `יצא: ${letters[pick]} – ${txt}`;
+    btn.disabled = false;
+  },2700);
+};
+
+/* ===== משימות (נשמר בדפדפן) ===== */
+const tasks = [
+  "לכתוב פונקציה foo שמקבלת מערך",
+  "להוסיף בדיקה פשוטה עבור bar",
+  "לתעד את הקוד בעברית",
+  "לשפר את העיצוב של הדף הזה"
+];
+let saved = [];
+try { saved = JSON.parse(localStorage.getItem("hw") || "[]"); } catch(e){}
+const ul = $("tasks");
+tasks.forEach((t,i)=>{
+  const li = document.createElement("li");
+  li.innerHTML = `<input type="checkbox" id="t${i}"><label for="t${i}">${t}</label>`;
+  const cb = li.querySelector("input");
+  cb.checked = !!saved[i];
+  cb.onchange = () => { saved[i] = cb.checked; try{localStorage.setItem("hw",JSON.stringify(saved))}catch(e){} update(); };
+  ul.appendChild(li);
+});
+function update(){
+  let n = 0;
+  ul.querySelectorAll("li").forEach(li=>{
+    const c = li.querySelector("input").checked;
+    li.classList.toggle("done",c); if(c) n++;
+  });
+  $("prog").value = n;
+  $("progText").textContent = n===tasks.length ? "כל הכבוד! סיימתם הכול 🎉" : `הושלמו ${n} מתוך ${tasks.length}`;
+}
+update();
+
+/* ===== חידון קוד ===== */
+const qs = [
+  {code:"let foo = [1, 2, 3];\nfoo.push(4);\nconsole.log(foo.length);",
+   q:"מה יודפס?", a:["3","4","undefined","שגיאה"], c:1},
+  {code:"const bar = 5;\nbar = 6;",
+   q:"מה קורה בהרצת הקוד?", a:["bar הופך ל-6","bar נשאר 5 בשקט","נזרקת שגיאה","bar הופך ל-undefined"], c:2},
+  {code:"console.log(typeof \"Lorem ipsum\");",
+   q:"מה יודפס?", a:["string","text","char","object"], c:0},
+  {code:"[1, 2, 3].map(baz => baz * 2);",
+   q:"מה התוצאה?", a:["[1, 2, 3]","[2, 4, 6]","6","[1, 4, 9]"], c:1},
+  {code:"console.log(2 + \"2\");",
+   q:"מה יודפס?", a:["4","22","שגיאה","NaN"], c:1}
+];
+let qi = 0, qScore = 0;
+function showQ(){
+  const q = qs[qi];
+  $("qNum").textContent = `שאלה ${qi+1} מתוך ${qs.length}`;
+  $("qCode").textContent = q.code;
+  $("qText").textContent = q.q;
+  $("qFeed").textContent = "";
+  $("qNext").style.display = "none";
+  const box = $("qOpts"); box.innerHTML = "";
+  q.a.forEach((t,i)=>{
+    const b = document.createElement("button");
+    b.textContent = t;
+    b.onclick = () => {
+      box.querySelectorAll("button").forEach((x,j)=>{
+        x.disabled = true;
+        if(j===q.c) x.classList.add("ok");
+      });
+      if(i===q.c){ qScore++; $("qFeed").textContent = "נכון! ✔"; }
+      else { b.classList.add("bad"); $("qFeed").textContent = "לא נכון – התשובה הנכונה מסומנת בירוק."; }
+      $("qNext").textContent = qi===qs.length-1 ? "סיום" : "הבא";
+      $("qNext").style.display = "inline-block";
+    };
+    box.appendChild(b);
+  });
+}
+let finished = false;
+$("qNext").onclick = () => {
+  if(finished){ finished = false; qi = 0; qScore = 0; showQ(); return; }
+  if(qi < qs.length-1){ qi++; showQ(); }
+  else {
+    $("qCode").textContent = ""; $("qOpts").innerHTML = "";
+    $("qText").textContent = `סיימת! ציון: ${qScore} מתוך ${qs.length}`;
+    $("qNum").textContent = ""; $("qFeed").textContent = "";
+    $("qNext").textContent = "שוב"; $("qNext").style.display = "inline-block";
+    finished = true;
+  }
+};
+$("qNext").addEventListener("click", () => {});
+
+showQ();
+
+/* ===== ניצוצות ברקע ===== */
+const cv = $("sparks"), ctx = cv.getContext("2d");
+let W,H,dots=[];
+function resize(){ W=cv.width=innerWidth; H=cv.height=innerHeight; }
+resize(); addEventListener("resize",resize);
+for(let i=0;i<70;i++) dots.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+  r:Math.random()*2+.5,v:Math.random()*.6+.2,a:Math.random()});
+(function loop(){
+  ctx.clearRect(0,0,W,H);
+  dots.forEach(p=>{
+    p.y -= p.v; p.a += .02; if(p.y<-5){p.y=H+5; p.x=Math.random()*W}
+    ctx.globalAlpha = .4+.4*Math.sin(p.a);
+    ctx.fillStyle = "#ffd54a";
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+  });
+  requestAnimationFrame(loop);
+})();
+</script>
 </body>
 </html>
